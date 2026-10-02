@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# 集成冒烟测试：对 qqmusic-gateway 做端到端验证。
+# 集成冒烟测试：对 QQMusicApi 做端到端验证。
 # 用法：pwsh -File scripts/smoke.ps1 [-Port 3456] [-SkipStart]
 #   -SkipStart：服务已由外部启动（如受限沙箱无法用 Start-Process 拉起），脚本只做测试与清理。
 param(

@@ -10,7 +10,7 @@ import { Agent, request as undiciRequest } from 'undici';
 
 /* ---------------------------- 常量 ---------------------------- */
 const ROUTER_PREFIX = '/api/v2';
-const GATEWAY_UA = 'qqmusic-gateway/1.0';
+const GATEWAY_UA = 'QQMusicApi/1.0';
 const DEFAULT_UPSTREAM = 'http://127.0.0.1:3200';
 const UPSTREAM_TIMEOUT_MS = 15000; // 上游连接 / 响应头 / 响应体空闲超时
 const HEALTH_TIMEOUT_MS = 1500; // _status 健康探测超时

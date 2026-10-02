@@ -23,7 +23,7 @@ import { randomBytes } from "node:crypto";
 import { Platform } from "./vendor/qqmusic/versioning.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-/** 项目根目录 (qqmusic-gateway/) */
+/** 项目根目录 (QQMusicApi/) */
 export const ROOT_DIR = resolve(__dirname, "..");
 
 /** 相对路径按进程工作目录解析 (与 node server.js 的运行目录一致) */

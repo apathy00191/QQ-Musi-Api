@@ -24,7 +24,7 @@ async function probeUpstream(url) {
       method: "GET",
       headersTimeout: 1500,
       bodyTimeout: 1500,
-      headers: { "user-agent": "qqmusic-gateway/health-probe" },
+      headers: { "user-agent": "QQMusicApi/health-probe" },
     });
     // 释放连接
     try {

@@ -1,8 +1,8 @@
-# qqmusic-gateway nginx 反向代理示例
+# QQMusicApi nginx 反向代理示例
 #
 # 安装（Debian/Ubuntu）:
-#   sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/qqmusic-gateway
-#   sudo ln -s /etc/nginx/sites-available/qqmusic-gateway /etc/nginx/sites-enabled/
+#   sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/QQMusicApi
+#   sudo ln -s /etc/nginx/sites-available/QQMusicApi /etc/nginx/sites-enabled/
 #   sudo nginx -t && sudo systemctl reload nginx
 # RHEL/CentOS 无 sites-enabled 机制，放入 /etc/nginx/conf.d/ 即可。
 #

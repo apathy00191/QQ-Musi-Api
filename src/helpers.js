@@ -37,7 +37,7 @@ export async function errorHandler(ctx, next) {
     ctx.status = status;
     ctx.body = fail(code, err.message || "Internal Server Error", err.data);
     if (status >= 500) {
-      console.error("[qqmusic-gateway]", err);
+      console.error("[QQMusicApi]", err);
     }
   }
 }

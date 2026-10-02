@@ -163,7 +163,7 @@ export class TokenStore {
   /** 串行写队列: 后一次写排队在前一次之后 */
   _enqueue(fn) {
     this._writeQueue = this._writeQueue.then(() => fn()).catch((e) => {
-      console.error("[qqmusic-gateway] tokenStore 落盘失败:", e);
+      console.error("[QQMusicApi] tokenStore 落盘失败:", e);
     });
     return this._writeQueue;
   }

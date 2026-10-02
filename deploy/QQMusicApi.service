@@ -1,0 +1,60 @@
+# QQMusicApi systemd 单元文件
+# 安装位置: /etc/systemd/system/QQMusicApi.service
+#
+#   sudo cp deploy/QQMusicApi.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now QQMusicApi
+#   journalctl -u QQMusicApi -f     # 启动日志中会打印管理令牌
+#
+# ⚠ 下面标注 [需修改] 的项请按实际部署环境调整。
+
+[Unit]
+Description=QQMusic API Gateway (QQMusicApi)
+Documentation=file:/opt/QQMusicApi/README.md
+# 等待网络在线后再启动（网关需监听端口并访问扩展服务上游）
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# [需修改] 运行服务的系统用户/组（建议专用非登录用户）
+#   创建方式: sudo useradd -r -s /usr/sbin/nologin qqmusic
+User=qqmusic
+Group=qqmusic
+
+# [需修改] 项目目录（若部署路径不同请同步修改）
+WorkingDirectory=/opt/QQMusicApi
+
+Environment=NODE_ENV=production
+
+# 可选的环境变量文件；前缀 "-" 表示文件不存在时不报错。
+# 建议路径: /etc/QQMusicApi/env（chmod 600）
+# 可在此文件中配置（示例）:
+#   PORT=3400
+#   HOST=0.0.0.0
+#   AUTH_MODE=token
+#   ADMIN_TOKEN=你的管理令牌
+#   DATA_DIR=/opt/QQMusicApi/data
+#   UPSTREAM_V2=http://127.0.0.1:3200
+#   V2_AUTOSTART=0
+#   V2_DIR=/opt/各种qq音乐api，有搜索
+EnvironmentFile=-/etc/QQMusicApi/env
+
+# [需修改] node 可执行文件路径（用 `which node` 确认，如 /usr/local/bin/node）
+ExecStart=/usr/bin/node server.js
+
+Restart=on-failure
+RestartSec=3
+
+# --- 安全加固 ---
+# 禁止提权
+NoNewPrivileges=true
+# 文件系统只读（除显式声明的可写路径）
+ProtectSystem=full
+# 数据目录可写（DATA_DIR 默认 ./data，即 /opt/QQMusicApi/data）
+# [需修改] 若 DATA_DIR 指向其他路径，请同步修改
+ReadWritePaths=/opt/QQMusicApi/data
+
+[Install]
+WantedBy=multi-user.target
