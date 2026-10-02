@@ -1,5 +1,5 @@
 {
-  "name": "qqmusic-gateway",
+  "name": "QQMusicApi",
   "version": "0.1.0",
   "description": "QQ Music unified API gateway: Bearer token auth + core API + v2 proxy + admin + Web UI (pure JS, no build step)",
   "type": "module",

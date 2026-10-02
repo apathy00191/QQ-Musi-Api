@@ -1,4 +1,4 @@
-#QQMusiApi — QQ 音乐统一 API 网关
+# QQMusicApi — QQ 音乐统一 API 网关
 
 > A unified QQ Music API gateway: core API + extension proxy + token auth + built-in Web console — pure JS ESM, zero build.
 
@@ -54,7 +54,7 @@
 
 ## 1. 项目简介
 
-`qqmusic-gateway` 是基于同工作区两个 QQ 音乐项目统一而成的 **API 网关**：
+`QQMusicApi` 是基于同工作区两个 QQ 音乐项目统一而成的 **API 网关**：
 
 - **核心能力**移植自 `音乐解析api`（Koa 实现）：搜索、歌曲详情、17 种音质播放直链、QRC 歌词解密、相似歌曲、用户信息与歌单、QQ 扫码与手机验证码登录凭证管理。
 - **扩展能力**代理自 `qq-music-ext`（TypeScript 项目，默认端口 3200）：网关通过 `/api/v2/*` 前缀反向代理到 `UPSTREAM_V2`（默认 `http://127.0.0.1:3200`），提供 `getSearchByKey`、`getSongInfo`、`getLyric`、`getMusicPlay`、`getTopLists`、`getRanks`、`getSongListDetail`、`getAlbumInfo`、`getSingerHotsong`、`getComments`、`getRecommend`、`getQQLoginQr`、`getMv`、`getImageUrl` 等接口。
@@ -93,7 +93,7 @@
       │  业务请求:  Authorization: Bearer <API Token>
       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  qqmusic-gateway  (默认 :3400)                  │
+│                  QQMusicApi  (默认 :3400)                  │
 │                                                                 │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  鉴权中间件 (AUTH_MODE=token / open)  +  Token 调用统计   │  │
@@ -169,7 +169,7 @@ npm start        # 等价于 node server.js，默认监听 0.0.0.0:3400
 1. **复制管理令牌**（三种途径任选）：
    - 启动日志中的 `ADMIN_TOKEN` 行；
    - 数据目录文件：Linux/macOS 执行 `cat data/admin-token`，Windows PowerShell 执行 `Get-Content .\data\admin-token`；
-   - systemd 部署后用 `journalctl -u qqmusic-gateway -f` 查看启动日志。
+   - systemd 部署后用 `journalctl -u QQMusicApi -f` 查看启动日志。
 2. **打开 Web 管理界面**：浏览器访问 `http://localhost:3400/`（即 `http://127.0.0.1:3400/`；远程部署时用 `http://服务器IP:3400/`），把管理令牌粘贴到右上角输入框并点「连接」。
 3. **创建 API Token**：在「Token 管理」页填写名称并创建，复制弹窗中的完整令牌备用；然后按下面的 curl 三连调用。
 
@@ -569,29 +569,29 @@ curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:3400/api/v2/_status
 
 ```bash
 # 方式一：scp 上传（在本机执行）
-scp -r qqmusic-gateway user@your-server:/opt/qqmusic-gateway
+scp -r QQMusicApi user@your-server:/opt/QQMusicApi
 
 # 方式二：服务器上 git 拉取（把仓库地址换成你的实际地址）
 ssh user@your-server
-sudo mkdir -p /opt/qqmusic-gateway
-git clone https://github.com/apathy00191/QQ-Musi-Api.git /opt/qqmusic-gateway
+sudo mkdir -p /opt/QQMusicApi
+git clone https://github.com/apathy00191/QQ-Musi-Api.git /opt/QQMusicApi
 
 # 创建运行用户并交出目录所有权（已存在可跳过）
 sudo useradd -r -s /usr/sbin/nologin qqmusic || true
-sudo chown -R qqmusic:qqmusic /opt/qqmusic-gateway
+sudo chown -R qqmusic:qqmusic /opt/QQMusicApi
 ```
 
 ### 9.2 安装依赖
 
 ```bash
-cd /opt/qqmusic-gateway
+cd /opt/QQMusicApi
 sudo -u qqmusic npm install --omit=dev
 ```
 
 ### 9.3 手动运行验证
 
 ```bash
-cd /opt/qqmusic-gateway
+cd /opt/QQMusicApi
 sudo -u qqmusic node server.js
 ```
 
@@ -602,26 +602,26 @@ sudo -u qqmusic node server.js
 
 ### 9.4 systemd 服务
 
-仓库提供了单元文件模板 [`deploy/qqmusic-gateway.service`](deploy/qqmusic-gateway.service)（其中注释标出了需要按环境修改的 `User`、`WorkingDirectory`、`ExecStart` 中的 node 路径、`ReadWritePaths`）。
+仓库提供了单元文件模板 [`deploy/QQMusicApi.service`](deploy/QQMusicApi.service)（其中注释标出了需要按环境修改的 `User`、`WorkingDirectory`、`ExecStart` 中的 node 路径、`ReadWritePaths`）。
 
 ```bash
-sudo cp deploy/qqmusic-gateway.service /etc/systemd/system/qqmusic-gateway.service
-# 按需编辑：sudo vi /etc/systemd/system/qqmusic-gateway.service
+sudo cp deploy/QQMusicApi.service /etc/systemd/system/QQMusicApi.service
+# 按需编辑：sudo vi /etc/systemd/system/QQMusicApi.service
 
 # 可选：集中存放环境变量（PORT / AUTH_MODE / ADMIN_TOKEN / DATA_DIR / UPSTREAM_V2 等）
-sudo mkdir -p /etc/qqmusic-gateway
-sudo tee /etc/qqmusic-gateway/env >/dev/null <<'EOF'
+sudo mkdir -p /etc/QQMusicApi
+sudo tee /etc/QQMusicApi/env >/dev/null <<'EOF'
 PORT=3400
 AUTH_MODE=token
 EOF
-sudo chmod 600 /etc/qqmusic-gateway/env
+sudo chmod 600 /etc/QQMusicApi/env
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now qqmusic-gateway
-systemctl status qqmusic-gateway
+sudo systemctl enable --now QQMusicApi
+systemctl status QQMusicApi
 
 # 查看启动日志（管理令牌就打印在这里）
-journalctl -u qqmusic-gateway -f
+journalctl -u QQMusicApi -f
 ```
 
 ### 9.5 nginx 反向代理
@@ -629,9 +629,9 @@ journalctl -u qqmusic-gateway -f
 仓库提供了示例 [`deploy/nginx.conf.example`](deploy/nginx.conf.example)，包含 80 端口、注释掉的 443/HTTPS 证书占位、`client_max_body_size 10m` 与 60 秒超时。
 
 ```bash
-sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/qqmusic-gateway
+sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/QQMusicApi
 # 编辑 server_name 与证书路径
-sudo ln -s /etc/nginx/sites-available/qqmusic-gateway /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/QQMusicApi /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -656,16 +656,16 @@ sudo ufw enable
 ### 9.7 升级流程
 
 ```bash
-cd /opt/qqmusic-gateway
+cd /opt/QQMusicApi
 git pull
 sudo -u qqmusic npm install --omit=dev
-sudo systemctl restart qqmusic-gateway
-journalctl -u qqmusic-gateway -n 50 --no-pager
+sudo systemctl restart QQMusicApi
+journalctl -u QQMusicApi -n 50 --no-pager
 ```
 
 ### 9.8 宝塔面板部署（Linux）
 
-使用宝塔面板时**不需要** `deploy/qqmusic-gateway.service`（systemd）与 `deploy/nginx.conf.example`——进程托管用宝塔的 Node 项目 / PM2，反代用宝塔自带 nginx，在面板里配置即可，两套方式不要混用。
+使用宝塔面板时**不需要** `deploy/QQMusicApi.service`（systemd）与 `deploy/nginx.conf.example`——进程托管用宝塔的 Node 项目 / PM2，反代用宝塔自带 nginx，在面板里配置即可，两套方式不要混用。
 
 **1）前置准备**
 
@@ -689,7 +689,7 @@ npm install --omit=dev
   - Node 版本：选 18+；包管理器选 npm；端口 `3400`；建议勾选「开机自启动」
 - 方式 B：【PM2 管理器】→ 添加项目
   - 启动文件：`server.js`（即命令 `node server.js`），项目目录同上
-  - 项目名称：`qqmusic-gateway`
+  - 项目名称：`QQMusicApi`
 
 本项目开箱即用：不设任何环境变量也会自动监听 `0.0.0.0:3400`，管理令牌自动生成到 `data/admin-token`。如需改端口/鉴权模式等，在启动命令前加环境变量即可，例如 `PORT=3500 AUTH_MODE=open node server.js`（方式 B 也可在 PM2 配置文件的 `env` 中设置）。
 
@@ -710,7 +710,7 @@ PM2 / Node 项目日志里有启动打印，或文件管理器查看 `/www/wwwro
 
 - 重要数据都在 `data/`（管理令牌、API token、登录凭证、调用统计），备份该目录即可；
 - 升级：覆盖新代码 → 面板执行 `npm install --omit=dev` → PM2/Node 项目重启；
-- 注意：宝塔的 Node 项目/PM2 会把服务托管给面板自身，**不要**同时再执行 `systemctl enable qqmusic-gateway`。
+- 注意：宝塔的 Node 项目/PM2 会把服务托管给面板自身，**不要**同时再执行 `systemctl enable QQMusicApi`。
 
 ## 10. FAQ
 
@@ -748,7 +748,7 @@ PM2 / Node 项目日志里有启动打印，或文件管理器查看 `/www/wwwro
 
 ```bash
 rm -f ./data/admin-token
-npm start            # systemd 环境：sudo systemctl restart qqmusic-gateway
+npm start            # systemd 环境：sudo systemctl restart QQMusicApi
 ```
 
 启动日志会打印新生成的管理令牌，同时覆盖写入该文件。若设置了 `ADMIN_TOKEN` 环境变量，则以环境变量为准（需先修改环境变量再重启）。

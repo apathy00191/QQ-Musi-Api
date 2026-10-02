@@ -89,11 +89,11 @@ app.use(helpers.notFoundHandler);
 function maybeAutostartV2() {
   if (!config.v2Autostart) return null;
   if (!config.v2Dir) {
-    console.warn("[qqmusic-gateway] V2_AUTOSTART=1 但未设置 V2_DIR, 跳过扩展服务拉起");
+    console.warn("[QQMusicApi] V2_AUTOSTART=1 但未设置 V2_DIR, 跳过扩展服务拉起");
     return null;
   }
   if (!existsSync(config.v2Dir)) {
-    console.error(`[qqmusic-gateway] V2_DIR 不存在: ${config.v2Dir}, 跳过扩展服务拉起`);
+    console.error(`[QQMusicApi] V2_DIR 不存在: ${config.v2Dir}, 跳过扩展服务拉起`);
     return null;
   }
 
@@ -118,19 +118,19 @@ function maybeAutostartV2() {
       shell: process.platform === "win32",
     });
     child.on("error", (err) => {
-      console.error(`[qqmusic-gateway] 扩展服务拉起失败: ${err.message}`);
+      console.error(`[QQMusicApi] 扩展服务拉起失败: ${err.message}`);
     });
     child.on("exit", (code, signal) => {
       console.log(
-        `[qqmusic-gateway] 扩展服务子进程退出 (code=${code}, signal=${signal ?? "none"})`,
+        `[QQMusicApi] 扩展服务子进程退出 (code=${code}, signal=${signal ?? "none"})`,
       );
     });
     console.log(
-      `[qqmusic-gateway] 已尝试拉起扩展服务: ${cmd} ${args.join(" ")} (cwd=${config.v2Dir})`,
+      `[QQMusicApi] 已尝试拉起扩展服务: ${cmd} ${args.join(" ")} (cwd=${config.v2Dir})`,
     );
     return child;
   } catch (e) {
-    console.error(`[qqmusic-gateway] 扩展服务拉起失败: ${e.message}`);
+    console.error(`[QQMusicApi] 扩展服务拉起失败: ${e.message}`);
     return null;
   }
 }
@@ -140,24 +140,24 @@ const v2Child = maybeAutostartV2();
 // ==================== 启动监听 ====================
 
 const server = app.listen(config.port, config.host, () => {
-  console.log("[qqmusic-gateway] ============ 启动信息 ============");
-  console.log(`[qqmusic-gateway] 版本        : v${config.version}`);
-  console.log(`[qqmusic-gateway] 监听        : http://${config.host}:${config.port}`);
-  console.log(`[qqmusic-gateway] AUTH_MODE   : ${config.authMode}`);
+  console.log("[QQMusicApi] ============ 启动信息 ============");
+  console.log(`[QQMusicApi] 版本        : v${config.version}`);
+  console.log(`[QQMusicApi] 监听        : http://${config.host}:${config.port}`);
+  console.log(`[QQMusicApi] AUTH_MODE   : ${config.authMode}`);
   console.log(
-    `[qqmusic-gateway] ADMIN_TOKEN  : ${config.adminToken} (source: ${config.adminTokenSource})`,
+    `[QQMusicApi] ADMIN_TOKEN  : ${config.adminToken} (source: ${config.adminTokenSource})`,
   );
-  console.log(`[qqmusic-gateway] DATA_DIR    : ${config.dataDir}`);
-  console.log(`[qqmusic-gateway] UPSTREAM_V2 : ${config.upstreamV2}`);
-  console.log(`[qqmusic-gateway] 平台        : ${config.platformName}`);
-  console.log("[qqmusic-gateway] =================================");
+  console.log(`[QQMusicApi] DATA_DIR    : ${config.dataDir}`);
+  console.log(`[QQMusicApi] UPSTREAM_V2 : ${config.upstreamV2}`);
+  console.log(`[QQMusicApi] 平台        : ${config.platformName}`);
+  console.log("[QQMusicApi] =================================");
 });
 
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
-    console.error(`[qqmusic-gateway] 端口 ${config.port} 已被占用`);
+    console.error(`[QQMusicApi] 端口 ${config.port} 已被占用`);
   } else {
-    console.error("[qqmusic-gateway] 监听失败:", err);
+    console.error("[QQMusicApi] 监听失败:", err);
   }
   process.exit(1);
 });
@@ -169,7 +169,7 @@ async function shutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
   armForceExit();
-  console.log(`[qqmusic-gateway] 收到 ${signal}, 正在优雅退出...`);
+  console.log(`[QQMusicApi] 收到 ${signal}, 正在优雅退出...`);
 
   if (v2Child && !v2Child.killed) {
     try {
@@ -186,7 +186,7 @@ async function shutdown(signal) {
     /* ignore */
   }
   await tokenStore.flush();
-  console.log("[qqmusic-gateway] 已退出");
+  console.log("[QQMusicApi] 已退出");
   process.exit(0);
 }
 
@@ -196,7 +196,7 @@ process.on("SIGTERM", () => shutdown("SIGTERM"));
 // 兜底: 退出流程卡住时 5s 后强制退出 (仅在 shutdown 内启动, 不影响正常运行)
 function armForceExit() {
   setTimeout(() => {
-    console.error("[qqmusic-gateway] 优雅退出超时, 强制退出");
+    console.error("[QQMusicApi] 优雅退出超时, 强制退出");
     process.exit(0);
   }, 5000).unref();
 }
