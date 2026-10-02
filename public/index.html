@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>QQ 音乐统一网关 · 管理控制台</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">🎵 <span>QQ 音乐统一网关</span></div>
+  <nav class="tabs" id="tabs" aria-label="主导航">
+    <button class="tab active" data-tab="overview">📊 概览</button>
+    <button class="tab" data-tab="tokens">🔑 Token 管理</button>
+    <button class="tab" data-tab="docs">📖 接口文档</button>
+    <button class="tab" data-tab="login">扫码 登录管理</button>
+  </nav>
+  <div class="conn">
+    <span class="dot" id="connDot" title="未连接"></span>
+    <input type="password" id="tokenInput" placeholder="管理令牌 X-Admin-Token" autocomplete="off" spellcheck="false">
+    <button class="btn primary" id="connectBtn">连接</button>
+    <button class="btn ghost" id="disconnectBtn">断开</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 概览 ============ -->
+  <section class="view active" id="view-overview">
+    <div class="guide card">
+      <h2>👋 尚未连接管理令牌</h2>
+      <p>管理令牌由服务端启动时打印在日志里（或读取 <code>DATA_DIR/admin-token</code> 文件）。
+      请粘贴到右上角输入框并点击「连接」。令牌只保存在本浏览器 <code>localStorage</code>（键 <code>qmg_admin_token</code>），仅用于携带 <code>X-Admin-Token</code> 请求头。</p>
+    </div>
+    <div class="admin-only">
+      <div class="section-head">
+        <h2>网关状态</h2>
+        <button class="btn" id="refreshOverview">⟳ 刷新</button>
+      </div>
+      <div class="grid stat-grid">
+        <div class="card stat"><div class="stat-label">版本</div><div class="stat-value" id="stVersion">—</div></div>
+        <div class="card stat"><div class="stat-label">鉴权模式</div><div class="stat-value" id="stAuthMode">—</div></div>
+        <div class="card stat"><div class="stat-label">运行时长</div><div class="stat-value" id="stUptime">—</div></div>
+        <div class="card stat"><div class="stat-label">Token 数量</div><div class="stat-value" id="stTokens">—</div></div>
+        <div class="card stat"><div class="stat-label">登录状态</div><div class="stat-value" id="stLogin">—</div></div>
+        <div class="card stat">
+          <div class="stat-label">扩展上游 UPSTREAM_V2</div>
+          <div class="stat-value"><span class="dot" id="stUpDot"></span><span id="stUpHealth">—</span></div>
+          <div class="stat-sub mono" id="stUpUrl">—</div>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>📈 每日调用统计</h3>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>日期</th><th class="num">总调用数</th></tr></thead>
+              <tbody id="daysBody"><tr class="empty"><td colspan="2">暂无统计数据</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>🏆 Token 调用排行（Top 10）</h3>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th class="num">#</th><th>名称</th><th class="num">调用数</th><th>占比</th><th>最后使用</th></tr></thead>
+              <tbody id="rankBody"><tr class="empty"><td colspan="5">暂无统计数据</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Token 管理 ============ -->
+  <section class="view" id="view-tokens">
+    <div class="guide card">
+      <h2>🔑 需要管理令牌</h2>
+      <p>Token 管理属于 <code>/admin/*</code> 接口，请先在右上角粘贴管理令牌并点击「连接」。</p>
+    </div>
+    <div class="admin-only">
+      <div class="section-head">
+        <h2>Token 管理</h2>
+        <span class="muted">业务接口调用需携带 <code>Authorization: Bearer &lt;API Token&gt;</code></span>
+      </div>
+      <div class="card create-form">
+        <input type="text" id="newTokenName" placeholder="Token 名称，如：我的播放器" maxlength="64">
+        <button class="btn primary" id="createTokenBtn">＋ 新建 Token</button>
+        <span class="muted">创建成功会弹出完整令牌，可一键复制。</span>
+      </div>
+      <div class="card">
+        <div class="tablewrap">
+          <table id="tokensTable">
+            <thead>
+              <tr>
+                <th>名称</th><th>令牌</th><th>启用</th>
+                <th class="num">调用次数</th><th>最后使用</th><th>创建时间</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="tokensBody"><tr class="empty"><td colspan="7">加载中…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 接口文档 ============ -->
+  <section class="view" id="view-docs">
+    <div class="guide card">
+      <h2>📖 接口文档</h2>
+      <p>接口文档（<code>/docs.json</code>）为公开数据，无需管理令牌即可查看。</p>
+      <p><button class="btn primary" id="docsOpenBtn">查看公开接口文档</button></p>
+      <p class="muted">管理令牌用于概览 / Token 管理 / 登录管理等 <code>/admin/*</code> 页面。</p>
+    </div>
+    <div class="docs-body">
+      <div class="card quickstart" id="quickstart">
+        <h2>🚀 快速上手</h2>
+        <ol class="qs-list">
+          <li><b>获取管理令牌</b>：服务端启动日志会打印，或读取数据目录下的 <code>admin-token</code> 文件内容，粘贴到右上角「管理令牌」输入框后点「连接」。</li>
+          <li><b>创建 API Token</b>：切换到「Token 管理」页，填写名称点「创建」，复制弹出的完整令牌。</li>
+          <li><b>管理接口鉴权头</b>（<code>/admin/*</code>）：<code>X-Admin-Token: <mark class="hl">&lt;管理令牌&gt;</mark></code></li>
+          <li><b>业务接口鉴权头</b>（<code>/api/v1/*</code>）：<code>Authorization: Bearer <mark class="hl">&lt;API Token&gt;</mark></code></li>
+          <li><b>AUTH_MODE 说明</b>：<span id="authModeNote">未连接时无法读取当前鉴权模式，连接后自动显示。</span></li>
+        </ol>
+        <p class="muted">下方所有 curl 中的 <mark class="hl">&lt;管理令牌&gt;</mark> 均为占位符，请替换为你自己的值；点击路径可复制整条 curl。</p>
+      </div>
+      <div class="docs-layout">
+        <aside class="docs-side card" id="docsNav" aria-label="接口分组导航"></aside>
+        <div class="docs-main">
+          <div class="section-head"><h2 id="docsTitle">接口文档</h2><button class="btn" id="docsRefreshBtn">⟳ 重新加载</button></div>
+          <div id="docsContent"><div class="card muted">加载中…</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 登录管理 ============ -->
+  <section class="view" id="view-login">
+    <div class="guide card">
+      <h2>扫码 需要管理令牌</h2>
+      <p>登录管理属于 <code>/admin/*</code> 接口，请先在右上角粘贴管理令牌并点击「连接」。</p>
+    </div>
+    <div class="admin-only">
+      <div class="section-head">
+        <h2>登录管理</h2>
+        <button class="btn" id="lgRefresh">⟳ 刷新状态</button>
+      </div>
+
+      <div class="card">
+        <h3>当前登录状态</h3>
+        <div class="kv">
+          <div class="kv-row"><span class="kv-k">登录状态</span><span id="lgState">—</span></div>
+          <div class="kv-row"><span class="kv-k">是否过期</span><span id="lgExpired">—</span></div>
+          <div class="kv-row"><span class="kv-k">musicid</span><span class="mono" id="lgMusicid">—</span></div>
+          <div class="kv-row"><span class="kv-k">凭证文件</span><span class="mono break" id="lgFile">—</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>QQ 扫码登录</h3>
+        <div class="row-actions">
+          <button class="btn primary" id="qrGetBtn">QR 获取二维码</button>
+          <span class="muted">每 2 秒自动轮询扫码结果（切换标签或页面隐藏会自动停止）</span>
+        </div>
+        <div id="qrBox" class="qr-box">
+          <img id="qrImg" alt="QQ 登录二维码">
+          <div class="qr-meta">
+            <div class="muted">identifier</div>
+            <code class="break" id="qrId">—</code>
+            <div class="qr-state" id="qrState">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>凭证操作</h3>
+        <div class="row-actions">
+          <button class="btn" id="btnRefreshCred">⟳ 刷新凭证</button>
+          <button class="btn warn" id="btnLogout">退出登录</button>
+          <button class="btn danger" id="btnClearCred">清空凭证</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>高级 · 查看凭证</h3>
+        <div class="row-actions">
+          <button class="btn" id="btnViewCred">👁 查看凭证（raw=1）</button>
+        </div>
+        <div id="credPanel" class="cred-panel">
+          <div class="muted">凭证文件：<code class="break" id="credFile">—</code></div>
+          <pre class="code" id="credVal">—</pre>
+          <div class="row-actions">
+            <button class="btn" id="credToggle">显示敏感值</button>
+            <button class="btn primary" id="credCopy">📋 复制完整凭证</button>
+          </div>
+          <p class="muted">敏感值默认遮罩显示；复制按钮复制的是完整原始值。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toasts" aria-live="polite"></div>
+
+<dialog id="dlgToken" class="modal">
+  <h3>🔑 Token 已创建</h3>
+  <p class="muted">请立即复制保存；之后也可随时在列表中点「复制」取回完整值。</p>
+  <pre class="code" id="dlgTokenVal"></pre>
+  <div class="modal-actions">
+    <button class="btn primary" id="dlgTokenCopy">📋 复制令牌</button>
+    <button class="btn" id="dlgTokenClose">关闭</button>
+  </div>
+</dialog>
+
+<dialog id="dlgExample" class="modal">
+  <h3 id="exampleTitle">使用示例</h3>
+  <pre class="code" id="exampleCode"></pre>
+  <div class="modal-actions">
+    <button class="btn primary" id="exampleCopy">📋 复制 curl</button>
+    <button class="btn" id="exampleClose">关闭</button>
+  </div>
+</dialog>
+
+<script src="/app.js" defer></script>
+</body>
+</html>

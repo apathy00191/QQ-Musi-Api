@@ -1,0 +1,19 @@
+{
+  "name": "qqmusic-gateway",
+  "version": "0.1.0",
+  "description": "QQ Music unified API gateway: Bearer token auth + core API + v2 proxy + admin + Web UI (pure JS, no build step)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@koa/router": "^12.0.1",
+    "koa": "^2.15.3",
+    "koa-bodyparser": "^4.4.1",
+    "undici": "^6.19.8"
+  }
+}
