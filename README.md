@@ -1,4 +1,4 @@
-# qqmusic-gateway — QQ 音乐统一 API 网关
+#QQMusiApi — QQ 音乐统一 API 网关
 
 > A unified QQ Music API gateway: core API + extension proxy + token auth + built-in Web console — pure JS ESM, zero build.
 
