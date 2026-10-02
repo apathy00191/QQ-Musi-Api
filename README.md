@@ -33,7 +33,7 @@
    - [7.6 管理接口（登录与凭证）](#76-管理接口登录与凭证)
    - [7.7 扩展代理接口](#77-扩展代理接口)
 8. [扩展服务接入](#8-扩展服务接入)
-   - [8.1 方式 A 手动启动扩展项目](#81-方式-a-手动启动扩展项目)
+   - [8.1 从 Release 安装并启动 qq-music-ext](#81-从-release-安装并启动-qq-music-ext)
    - [8.2 方式 B 网关自动拉起扩展服务](#82-方式-b-网关自动拉起扩展服务)
    - [8.3 排查 /api/v2 是否可用](#83-排查-apiv2-是否可用)
    - [8.4 宝塔部署要点](#84-宝塔部署要点)
@@ -116,7 +116,7 @@
                                              ▼
                           ┌─────────────────────────────────────┐
                           │  扩展服务  :3200                    │
-                          │  各种qq音乐api，有搜索              │
+                          │  qq-music-ext                      │
                           │  getSearchByKey / getSongInfo / …   │
                           └─────────────────────────────────────┘
 ```
@@ -131,14 +131,20 @@
 ### 4.1 环境要求
 
 - **Node.js >= 18**（网关本体）。
-- 若同时运行扩展服务 `各种qq音乐api，有搜索`，该项目自身要求 **Node.js 20+**。
+- 若同时运行扩展服务 `qq-music-ext`，该项目自身要求 **Node.js `^20.17.0 || >=22.9.0`**（建议直接用 Node 22 LTS）。
 
 ### 4.2 安装与启动
 
+仓库地址：<https://github.com/apathy00191/QQ-Musi-Api>
+
 ```bash
-# 1) 克隆仓库（占位地址，见下方说明）
-git clone https://github.com/<你的用户名>/qqmusic-gateway.git
-cd qqmusic-gateway
+# 1) 获取源码（二选一）
+# 方式一：克隆仓库
+git clone https://github.com/apathy00191/QQ-Musi-Api.git
+cd QQ-Musi-Api
+
+# 方式二：从 Release 页下载压缩包解压（Release 资产说明见下表）
+# cd <解压后的目录>
 
 # 2) 安装依赖
 npm install
@@ -147,7 +153,14 @@ npm install
 npm start        # 等价于 node server.js，默认监听 0.0.0.0:3400
 ```
 
-> `https://github.com/<你的用户名>/qqmusic-gateway.git` 中的 `<你的用户名>` 是占位符：发布到 GitHub 后，请把克隆地址替换为你实际的仓库地址再执行。
+**Release 资产说明**（<https://github.com/apathy00191/QQ-Musi-Api/releases>）：
+
+| 资产 | 内容 | 说明 |
+|---|---|---|
+| `QQMusicApi.zip` | 网关本体 | 解压后得到本 README 所在的全部内容（`server.js`、`src/`、`public/`、`deploy/` 等） |
+| `qq-music-ext.zip` | 扩展服务 | 解压得到 `qq-music-ext/`，作为 `/api/v2/*` 的上游服务，搭建见 [8.1](#81-从-release-安装并启动-qq-music-ext) |
+
+> 解压后的目录名可自定，本文命令示例中网关目录以 `QQMusicApi` 为例。
 
 启动日志会打印**管理令牌**；同时它会被写入 `DATA_DIR/admin-token`（默认 `./data/admin-token`）。
 
@@ -245,7 +258,7 @@ curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:3400/api/v2/getTopLists
 >
 > 下表为 **7 组共 58 个端点**的完整清单（由 `src/docs.js` 生成）。鉴权级别：**公开** = 无需凭据；**Bearer** = `Authorization: Bearer <token>` 或 `?token=<token>`；**管理** = `X-Admin-Token: <管理令牌>`。参数列中的“(必填)”表示必填参数，其余为可选。
 >
-> `GET /`（Web 管理界面）同为公开访问，见[第 6 章 鉴权说明](#6-鉴权说明)。`/api/v2/*` 组需扩展服务在线（见[第 8 章](#8-扩展服务接入)），路径为扩展项目原路径加 `/api/v2` 前缀；扩展接口参数亦可参见源项目 `各种qq音乐api，有搜索/src/routes/api-metadata.ts` 与其 `docs/` 目录。
+> `GET /`（Web 管理界面）同为公开访问，见[第 6 章 鉴权说明](#6-鉴权说明)。`/api/v2/*` 组需扩展服务在线（见[第 8 章](#8-扩展服务接入)），路径为扩展项目原路径加 `/api/v2` 前缀；扩展接口参数亦可参见源项目 `qq-music-ext/src/routes/api-metadata.ts` 与其 `docs/` 目录。
 
 ### 7.1 基础
 
@@ -444,26 +457,90 @@ curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:3400/api/v2/getTopLists
 
 `/api/v2/*` 只是代理；**扩展服务本身必须在 `UPSTREAM_V2`（默认 `http://127.0.0.1:3200`）在线**。两种接入方式：
 
-### 8.1 方式 A 手动启动扩展项目
+### 8.1 从 Release 安装并启动 qq-music-ext
 
-推荐先用这种方式验证链路（两个终端各启一个进程）：
+扩展服务以压缩包 **`qq-music-ext.zip`** 形式挂在本仓库 [Release](https://github.com/apathy00191/QQ-Musi-Api/releases) 页面，解压得到 `qq-music-ext/`（TypeScript 项目，默认端口 3200）。以下步骤以宝塔/Debian 服务器为例（均为实测步骤）：
+
+**1）下载解压**
+
+从 Release 下载 `qq-music-ext.zip`，上传到服务器后解压：
 
 ```bash
-# 终端 1：启动扩展服务（开发模式，端口 3200）
-cd "各种qq音乐api，有搜索"
-npm install
-npm run dev
-# 或生产方式：npm run build 后 npm run start
-
-# 终端 2：启动网关
-cd qqmusic-gateway
-npm start
+cd /www/wwwroot
+unzip qq-music-ext.zip        # 得到 /www/wwwroot/qq-music-ext
+cd qq-music-ext
 ```
+
+**2）准备 Node 20.17+ / 22**
+
+```bash
+node -v    # 必须满足 ^20.17.0 || >=22.9.0，系统自带的 12/16/18 均不可用
+```
+
+宝塔环境常见坑：终端 `node -v` 显示系统旧版（如 v12）而面板装的是新版——把面板 Node 提到 PATH 前面（以实际安装目录为准）：
+
+```bash
+export PATH=/www/server/nodejs/v22.15.1/bin:$PATH
+hash -r
+echo 'export PATH=/www/server/nodejs/v22.15.1/bin:$PATH' >> ~/.bashrc   # 持久化
+node -v
+```
+
+**3）安装依赖（建议国内镜像）**
+
+```bash
+npm config set registry https://registry.npmmirror.com
+npm install --registry=https://registry.npmmirror.com --no-audit --no-fund
+# 若报 "Cannot read property 'edgesOut' of null"：先升级 npm 11 再重装
+#   npm install -g npm@11 --registry=https://registry.npmmirror.com
+```
+
+**4）批准 esbuild 安装脚本**（npm 11 安全机制；不批准则 vite 构建会失败）
+
+```bash
+npm install-scripts approve esbuild
+# 若提示命令不存在，等效方式：npm rebuild esbuild
+```
+
+**5）构建生产产物**
+
+```bash
+npm run build              # 产出 dist/app.js
+# 若最后 MCP 子包（build:mcp）报错，可只构建主服务：npm run build:core
+ls dist/app.js && echo "构建OK"
+```
+
+**6）启动（二选一）**
+
+```bash
+# 终端 1：手动启动（先用这种方式验证链路）
+npm start                   # = node dist/app.js，端口 3200
+# 或开发模式 npm run dev（tsx 直跑源码，无需构建）
+
+# 终端 2：另一个终端启动网关
+cd QQMusicApi && npm start
+```
+
+生产环境建议交给宝塔 **Node 项目 / PM2 管理器**托管：目录 `/www/wwwroot/qq-music-ext`，启动命令 `node dist/app.js`，端口 `3200`，Node 版本选 22，勾选开机自启（见 [8.4](#84-宝塔部署要点) 与 [9.8](#98-宝塔面板部署linux)）。
+
+**7）验证链路**
+
+```bash
+curl http://127.0.0.1:3200/getHotkey                              # 扩展服务自身可用
+curl -H "Authorization: Bearer $TOKEN" \
+  http://127.0.0.1:3400/api/v2/_status                             # 网关链路 → healthy:true
+```
+
+**注意事项**
+
+- `3200` 端口**不要对公网开放**，外部流量统一走网关 `/api/v2/*`；
+- 用户歌单等需登录态的接口要配置 Cookie，见 `qq-music-ext/docs/COOKIE_CONFIG_GUIDE.md`（支持全局配置，或调用时透传 `?cookie=` / `X-Custom-Cookie` 头的降级模式）；
+- 扩展服务自带调试台：`http://127.0.0.1:3200/explorer`（仅本机/内网访问即可）。
 
 ### 8.2 方式 B 网关自动拉起扩展服务
 
 ```bash
-V2_AUTOSTART=1 V2_DIR="/path/to/各种qq音乐api，有搜索" npm start
+V2_AUTOSTART=1 V2_DIR="/path/to/qq-music-ext" npm start
 ```
 
 网关启动时会尝试把 `V2_DIR` 指向的扩展项目作为子进程拉起（优先 `dist/app.js`，否则回退开发模式启动）；是否成功看启动日志。
@@ -480,7 +557,7 @@ curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:3400/api/v2/_status
 
 ### 8.4 宝塔部署要点
 
-- 扩展服务在宝塔面板下与网关一样按 **Node 项目 / PM2 管理器**部署，端口保持 `3200`；或给网关设置 `V2_AUTOSTART=1` 与 `V2_DIR=/www/wwwroot/各种qq音乐api，有搜索` 让网关自动拉起它。
+- 扩展服务在宝塔面板下与网关一样按 **Node 项目 / PM2 管理器**部署，端口保持 `3200`；或给网关设置 `V2_AUTOSTART=1` 与 `V2_DIR=/www/wwwroot/qq-music-ext` 让网关自动拉起它。
 - 验证：`GET /api/v2/_status` 返回 `healthy:true` 即链路正常。
 - 完整面板步骤（Node 版本管理器、上传安装、启动方式、反向代理、备份升级）见 [9.8 宝塔面板部署（Linux）](#98-宝塔面板部署linux)；宝塔托管与 systemd/nginx 两套方式不要混用。
 
@@ -497,7 +574,7 @@ scp -r qqmusic-gateway user@your-server:/opt/qqmusic-gateway
 # 方式二：服务器上 git 拉取（把仓库地址换成你的实际地址）
 ssh user@your-server
 sudo mkdir -p /opt/qqmusic-gateway
-git clone https://git.example.com/you/qqmusic-gateway.git /opt/qqmusic-gateway
+git clone https://github.com/apathy00191/QQ-Musi-Api.git /opt/qqmusic-gateway
 
 # 创建运行用户并交出目录所有权（已存在可跳过）
 sudo useradd -r -s /usr/sbin/nologin qqmusic || true
@@ -597,17 +674,17 @@ journalctl -u qqmusic-gateway -n 50 --no-pager
 
 **2）上传代码并安装依赖**
 
-文件管理器把项目上传解压到 `/www/wwwroot/qqmusic-gateway`（或在终端 `git clone`），然后面板【终端】执行：
+文件管理器把项目上传解压到 `/www/wwwroot/QQMusicApi`（或在终端 `git clone`），然后面板【终端】执行：
 
 ```bash
-cd /www/wwwroot/qqmusic-gateway
+cd /www/wwwroot/QQMusicApi
 npm install --omit=dev
 ```
 
 **3）启动网关（二选一）**
 
 - 方式 A：【网站】→【Node项目】→ 添加 Node 项目
-  - 项目目录：`/www/wwwroot/qqmusic-gateway`
+  - 项目目录：`/www/wwwroot/QQMusicApi`
   - 启动选项 / 命令：`node server.js`
   - Node 版本：选 18+；包管理器选 npm；端口 `3400`；建议勾选「开机自启动」
 - 方式 B：【PM2 管理器】→ 添加项目
@@ -623,11 +700,11 @@ npm install --omit=dev
 
 **5）获取管理令牌**
 
-PM2 / Node 项目日志里有启动打印，或文件管理器查看 `/www/wwwroot/qqmusic-gateway/data/admin-token`，复制后粘贴到 Web 界面右上角登录。
+PM2 / Node 项目日志里有启动打印，或文件管理器查看 `/www/wwwroot/QQMusicApi/data/admin-token`，复制后粘贴到 Web 界面右上角登录。
 
 **6）扩展服务（可选，`/api/v2/*` 代理需要）**
 
-再添加一个 Node 项目或 PM2 项目指向 `各种qq音乐api，有搜索` 目录：先在该目录 `npm install`，启动命令用 `npm run dev`（或 `npm run build` 后 `node dist/app.js`），端口保持 `3200`。也可给网关设置 `V2_AUTOSTART=1` 与 `V2_DIR=/www/wwwroot/各种qq音乐api，有搜索` 让网关自动拉起它。验证：`/api/v2/_status` 返回 `healthy:true`。
+再添加一个 Node 项目或 PM2 项目指向 `qq-music-ext` 目录：先在该目录 `npm install`，启动命令用 `npm run dev`（或 `npm run build` 后 `node dist/app.js`），端口保持 `3200`。也可给网关设置 `V2_AUTOSTART=1` 与 `V2_DIR=/www/wwwroot/qq-music-ext` 让网关自动拉起它。验证：`/api/v2/_status` 返回 `healthy:true`。
 
 **7）备份与升级**
 
@@ -648,7 +725,7 @@ PM2 / Node 项目日志里有启动打印，或文件管理器查看 `/www/wwwro
 
 ### `/api/v2/*` 返回 502 / 上游不可达？
 
-1. 扩展服务是否已启动（方式 A 手动启动，或方式 B `V2_AUTOSTART=1 V2_DIR=...`）。
+1. 扩展服务是否已启动（[8.1](#81-从-release-安装并启动-qq-music-ext) 手动启动，或 [8.2](#82-方式-b-网关自动拉起扩展服务) `V2_AUTOSTART=1 V2_DIR=...`）。
 2. `UPSTREAM_V2` 是否指向正确地址（默认 `http://127.0.0.1:3200`）。
 3. 用 `GET /api/v2/_status`（带 Bearer token）确认上游健康。
 4. 用 `V2_AUTOSTART=1` 时检查 `V2_DIR` 是否指向扩展项目根目录，失败原因见网关启动日志。
@@ -698,7 +775,7 @@ node -v
 升级后清掉旧环境重新安装：
 
 ```bash
-cd /www/wwwroot/qqmusic-gateway
+cd /www/wwwroot/QQMusicApi
 rm -rf node_modules
 npm install --omit=dev
 node -v   # 确认 ≥18 再启动
@@ -711,10 +788,10 @@ node -v   # 确认 ≥18 再启动
 | 上游项目 | 在本项目中的角色 | 出处与链接 |
 |---|---|---|
 | `音乐解析api` | **核心能力**：`/api/v1/*` 的登录凭证、搜索、歌曲、用户接口，以及签名 / TripleDES / QRC 解密等核心算法 | 其 `package.json` 标注为 [L-1124/QQMusicApi](https://github.com/L-1124/QQMusicApi) 的 Node.js（JavaScript）移植，Koa 实现 |
-| `各种qq音乐api，有搜索` | **扩展能力**：`/api/v2/*` 的上游服务与接口元数据（`src/routes/api-metadata.ts`、`docs/` 文档目录） | 对应 [sansenjian/qq-music-api](https://github.com/sansenjian/qq-music-api)，Fork 自 [Rain120/qq-music-api](https://github.com/Rain120/qq-music-api)（原项目已停止维护，该 Fork 持续更新），License 为 MIT |
+| `qq-music-ext` | **扩展能力**：`/api/v2/*` 的上游服务与接口元数据（`src/routes/api-metadata.ts`、`docs/` 文档目录） | 对应 [sansenjian/qq-music-api](https://github.com/sansenjian/qq-music-api)，Fork 自 [Rain120/qq-music-api](https://github.com/Rain120/qq-music-api)（原项目已停止维护，该 Fork 持续更新），License 为 MIT |
 
 - **核心算法与接口归属**：`zzc_sign` 签名、自定义 TripleDES 加解密、QRC 歌词解密等核心算法，以及登录 / 搜索 / 歌曲 / 用户等核心接口实现，移植自 `音乐解析api`，其上游为 [L-1124/QQMusicApi](https://github.com/L-1124/QQMusicApi) 的 Node.js 移植（出处以 `音乐解析api/package.json` 的 "JavaScript port of L-1124/QQMusicApi" 标注为准）。
-- **扩展服务接口元数据归属**：`/api/v2/*` 各接口的行为、参数与文档取自 `各种qq音乐api，有搜索` 的 `src/routes/api-metadata.ts`，即 [sansenjian/qq-music-api](https://github.com/sansenjian/qq-music-api)；其 README 明确声明 Fork 自 [Rain120/qq-music-api](https://github.com/Rain120/qq-music-api) 并使用 MIT 许可证。
+- **扩展服务接口元数据归属**：`/api/v2/*` 各接口的行为、参数与文档取自 `qq-music-ext` 的 `src/routes/api-metadata.ts`，即 [sansenjian/qq-music-api](https://github.com/sansenjian/qq-music-api)；其 README 明确声明 Fork 自 [Rain120/qq-music-api](https://github.com/Rain120/qq-music-api) 并使用 MIT 许可证。
 - 衷心感谢 [L-1124](https://github.com/L-1124)、[sansenjian](https://github.com/sansenjian) 与 [Rain120](https://github.com/Rain120) 及各上游项目的所有贡献者；上游项目的版权归其各自作者所有，License 以其各自仓库的声明为准。
 
 ## 12. License
