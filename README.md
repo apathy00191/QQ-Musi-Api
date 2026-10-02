@@ -57,7 +57,7 @@
 `qqmusic-gateway` 是基于同工作区两个 QQ 音乐项目统一而成的 **API 网关**：
 
 - **核心能力**移植自 `音乐解析api`（Koa 实现）：搜索、歌曲详情、17 种音质播放直链、QRC 歌词解密、相似歌曲、用户信息与歌单、QQ 扫码与手机验证码登录凭证管理。
-- **扩展能力**代理自 `各种qq音乐api，有搜索`（TypeScript 项目，默认端口 3200）：网关通过 `/api/v2/*` 前缀反向代理到 `UPSTREAM_V2`（默认 `http://127.0.0.1:3200`），提供 `getSearchByKey`、`getSongInfo`、`getLyric`、`getMusicPlay`、`getTopLists`、`getRanks`、`getSongListDetail`、`getAlbumInfo`、`getSingerHotsong`、`getComments`、`getRecommend`、`getQQLoginQr`、`getMv`、`getImageUrl` 等接口。
+- **扩展能力**代理自 `qq-music-ext`（TypeScript 项目，默认端口 3200）：网关通过 `/api/v2/*` 前缀反向代理到 `UPSTREAM_V2`（默认 `http://127.0.0.1:3200`），提供 `getSearchByKey`、`getSongInfo`、`getLyric`、`getMusicPlay`、`getTopLists`、`getRanks`、`getSongListDetail`、`getAlbumInfo`、`getSingerHotsong`、`getComments`、`getRecommend`、`getQQLoginQr`、`getMv`、`getImageUrl` 等接口。
 
 网关为纯 JS ESM、**零构建**，可在 Linux 与 Windows 直接运行；依赖仅 4 个：`koa`、`@koa/router`、`koa-bodyparser`、`undici`。`npm start` 即 `node server.js`。
 
